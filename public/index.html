@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+<head>
+    <title>fe 招聘</title>
+    <link href="/assets/normalize.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding: 20px;
+            background: #efefef;
+        }
+        .demo-pic {
+            display: block;
+            width: 40%;
+        }
+    </style>
+</head>
+<body>
+<h2>欢迎：</h2>
+<div id="login-info" style="height: 70px"></div>
+<h2>你的任务：</h2>
+<div>
+    <div>参考如下demo，完成需求开发</div>
+    <p>Demo效果：<img src="/assets/demo.png" class="demo-pic" alt="demo效果"></p>
+    <div><a href="javascript:;" id="download-link"} target="_blank">下载demo代码</a></div>
+</div>
+<h2>参考资料：</h2>
+<ul>
+    <li>
+        <a href="/docs/fcui2" target="_blank">fcui2文档</a>
+    </li>
+    <li>
+        <a href="/docs/lodash" target="_blank">lodash文档</a>
+    </li>
+</ul>
+<h2>提交最终代码：</h2>
+<form action="/upload" method="post" enctype="multipart/form-data">
+    <input type="file" name="file"/>
+    zip类型，1M以内
+    <input type="submit" value="确认提交"/>
+</form>
+<h2 class="header">
+    应聘者列表：
+</h2>
+<div id="main"></div>
+<script type="application/template" id="tpl-login">
+    <style>
+        .row {
+            padding: 2px;
+        }
+    </style>
+    <div class="row">姓名：<%- user.name %></div>
+    <div class="row">登录时间：<%- user.loginTime %></div>
+    <% if (user.name === 'admin') { %><div class="row"><a href="/getPass" target="_blank">获取登录密码</a></div><% } %>
+</script>
+<script type="application/template" id="tpl-main">
+    <style>
+        .user-list {
+            display: flex;
+            flex-flow: row wrap;
+        }
+        .user-list .user-item {
+            width: 30%;
+            flex-grow: 1;
+            padding: 10px;
+        }
+        .user-list .user-item .inner {
+            height: 14vh;
+            border: 1px solid #bbb;
+        }
+        .user-list .user-item.on .inner {
+            color: #333;
+            background: #98FB98;
+        }
+        .user-list .user-item.off .inner {
+            color: #333;
+            background: #ddd;
+        }
+        .user-list .user-item .label {
+            text-align: center;
+            height: 14vh;
+            font-size: 1.5em;
+        }
+        .user-list .user-item .label .main{
+            line-height: 8vh;
+        }
+        .user-list .user-item .label .ext{
+            font-size: 0.6em;
+        }
+    </style>
+    <main class="user-list">
+        <% _.forEach(list, function(user) { %>
+        <section class="user-item <%- user.on ? 'on' : 'off' %>">
+            <div class="inner J-toggleStatus" data-id="<%- user.id %>">
+                <div class="label">
+                    <div class="main"><%- user.name %></div>
+                    <div class="ext">
+                        <div>登录时间：<%- user.loginTime %></div>
+                        <div>
+                            <%- user.submitTime ? '提交时间：' + user.submitTime : '' %>
+                            <% if (user.ip) { %>
+                                <a href="<%- 'http://' + user.ip + ':' + user.workPort %>" target="_blank">
+                                    查看效果<%- 'http://' + user.ip + ':' + user.workPort %>
+                                </a>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <% }); %>
+    </main>
+</script>
+<script src="/assets/jquery.min.js"></script>
+<script src="/assets/lodash.min.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    var userInfo = {};
+    var userList = [];
+    var socket = io();
+
+    $(function () {
+        $('#download-link').attr('href', location.protocol + '//' + location.hostname + ':8080');
+        autoRefresh();
+    });
+
+    function renderUserList(list) {
+        userList = list || [];
+        var renderTpl = _.template($('#tpl-main').html());
+        var html = renderTpl({list: userList});
+        $('#main').html(html);
+    }
+
+    function renderLoginInfo(info) {
+        userInfo = info || {};
+        var renderTpl = _.template($('#tpl-login').html());
+        var html = renderTpl({user: userInfo});
+        $('#login-info').html(html);
+    }
+
+    function autoRefresh() {
+        socket.emit('login', {from: 'v1'}, function (user) {
+            renderLoginInfo(user);
+        });
+        socket.on('sync userList', function (userList) {
+            if (userInfo.name === 'admin') {
+                socket.emit('sync userList for admin', {}, function (userList) {
+                    renderUserList(userList);
+                });
+            }
+            else {
+                renderUserList(userList);
+            }
+        });
+        socket.on('reload', function () {
+            console.log('need reload');
+            location.reload();
+        });
+    }
+</script>
+</body>
+</html>
