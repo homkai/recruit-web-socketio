@@ -51,5 +51,5 @@ Temporary Items
 **/npm-debug.log
 **/package-lock.json
 
-# lib
-lib
+# ide
+.idea
