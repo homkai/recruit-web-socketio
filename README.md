@@ -8,6 +8,9 @@
 - 可监控应聘者登录的时间及中途是否断网，中途断网再次登录需要新的临时密码，并会重新记录登录时间
 - socket.io加持，管理员页面自动刷新显示
 
+# demo图
+![效果图](./demo.jpg)
+
 # 启动
 ```bash
 npm i -g http-server forever
